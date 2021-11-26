@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+  <title>Ocean Viking Medical Consultations</title>
+</head>
+<body>
+    <div class="container p-5 has-text-centered">
+      <div class="columns is-centered">
+        <div class="column is-one-quarter-desktop">
+          <div class="block my-3">
+            <form action="/dataupdate" method="POST">
+              <div class="field my-5">
+                <label for="" class="label">Insert bracelet number</label>
+                <div class="control"><input class="input" type="text" name="bracelet" /></div>
+              </div>
+              <div class="control my-5">
+                <input class="button is-primary" type="submit" value="submit" />
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% if not_found %}
+        <div class="columns is-centered">
+          <div class="column is-one-quarter-desktop">
+            <div class="block my-3">
+              <label for="" class="label">No data found for bracelet number {{ bracelet_number }}</label>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      {% if info %}
+        <div class="columns is-centered">
+          <div class="column is-one-quarter-desktop">
+            <div class="block my-3">
+              <label for="" class="label">Patient information</label>
+                {% for info_name, info_values in info.items() %}
+                  <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
+                {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      {% if consultations %}
+        <div class="columns is-centered">
+          <div class="column is-one-quarter-desktop">
+            <div class="block my-3">
+              <label for="" class="label">Consultations</label>
+            </div>
+            <br>
+            {% for consultation in consultations %}
+              <div class="block my-3">
+                {% for info_name, info_values in consultation.items() %}
+                    <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
+                {% endfor %}
+              </div>
+              <br>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+</body>
+</html>

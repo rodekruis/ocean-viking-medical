@@ -24,6 +24,15 @@
           </div>
         </div>
       </div>
+      {% if no_data %}
+        <div class="columns is-centered">
+          <div class="column is-one-quarter-desktop">
+            <div class="block my-3">
+              <label for="" class="label">Please specify the bracelet number</label>
+            </div>
+          </div>
+        </div>
+      {% endif %}
       {% if not_found %}
         <div class="columns is-centered">
           <div class="column is-one-quarter-desktop">
@@ -37,7 +46,7 @@
         <div class="columns is-centered">
           <div class="column is-one-quarter-desktop">
             <div class="block my-3">
-              <label for="" class="label">Patient information</label>
+              <label for="" class="label" style="color:#EE3224">Patient information</label>
                 {% for info_name, info_values in info.items() %}
                   <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
                 {% endfor %}
@@ -49,17 +58,40 @@
         <div class="columns is-centered">
           <div class="column is-one-quarter-desktop">
             <div class="block my-3">
-              <label for="" class="label">Consultations</label>
+              <label for="" class="label" style="color:#EE3224">Consultations</label>
             </div>
-            <br>
             {% for consultation in consultations %}
               <div class="block my-3">
                 {% for info_name, info_values in consultation.items() %}
-                    <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
+                  <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
                 {% endfor %}
               </div>
-              <br>
             {% endfor %}
+            <br>
+            <div class="block my-3">
+              {% for info_name, info_values in referral.items() %}
+                <label for="" class="label" style="color:#EE3224">{{ info_name }} {{ info_values }}</label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="columns is-centered">
+          <div class="column is-one-quarter-desktop">
+            <div class="block my-3">
+              <form action= "/updatesubmission" method="POST">
+                <label for="" class="label">Update referral status</label>
+                <div class="field my-5">
+                  <label for="" class="label">bracelet number</label>
+                  <div class="control"><input class="input" type="text" name="bracelet" /></div>
+                </div>
+                <select name='referral'>
+                  {% for referral in referral_states %}
+                    <option value="{{ referral }}" >{{ referral }}</option>
+                  {% endfor %}
+                </select>
+                <input type="submit" value="Submit" />
+              </form>
+            </div>
           </div>
         </div>
       {% endif %}

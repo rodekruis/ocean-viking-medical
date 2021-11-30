@@ -3,26 +3,43 @@ import pandas as pd
 from collections import OrderedDict
 import io
 import os
+import json
 from dotenv import load_dotenv
 # from azure.storage.blob import BlobServiceClient
 from flask import Flask, render_template, request, send_file
 app = Flask(__name__)
 load_dotenv()  # take environment variables from .env
 
+referral_states = [
+    'Referral is not needed',
+    'Referral is needed, not urgent',
+    'Referral is needed, urgent',
+    'Referral is needed, medevac'
+]
 
-def process_data(df_form, bracelet_number=None):
 
-    if df_form.empty or bracelet_number is None:
+def process_data(df_form, bracelet_number=None, first=False):
+
+    if first:
         return render_template('data.html')
+    if bracelet_number == "":
+        return render_template('data.html',
+                               no_data=True)
+    if df_form.empty and bracelet_number != "":
+        return render_template('data.html',
+                               not_found=True,
+                               bracelet_number=bracelet_number)
 
     df = df_form[df_form['bracelet_number'] == bracelet_number]
+    df = df.reset_index(drop=True)
 
     if df.empty:
         return render_template('data.html',
                                not_found=True,
                                bracelet_number=bracelet_number)
 
-    df['date'] = pd.to_datetime(df['start']).dt.date
+    df['start'] = pd.to_datetime(df['start'])
+    df['date'] = df['start'].dt.date
 
     # generic info
     info = {}
@@ -34,6 +51,7 @@ def process_data(df_form, bracelet_number=None):
 
     # consultations
     consultations = []
+    referral = {}
     for ix, row in df.iterrows():
         consultation = {}
         consultation['Date'] = row['date']
@@ -49,14 +67,18 @@ def process_data(df_form, bracelet_number=None):
         if pd.isna(treatment):
             treatment = "nothing"
         consultation['Treatment'] = treatment
-        if row['referral'] == 'yes':
-            consultation['Referral is needed'] = row['referral_urgency']
+        if ix == len(df)-1:
+            if row['referral'] == 'yes':
+                referral['Referral is needed:'] = row['referral_urgency']
+            else:
+                referral['Referral is not needed'] = ''
         consultations.append(consultation)
 
-    print(consultations)
     return render_template('data.html',
                            info=info,
-                           consultations=consultations)
+                           consultations=consultations,
+                           referral=referral,
+                           referral_states=referral_states)
 
 
 def get_data():
@@ -71,17 +93,78 @@ def get_data():
     return df_form
 
 
+@app.route("/updatesubmission", methods=['POST'])
+def update_submission():
+
+    bracelet_number = request.form['bracelet']
+    df_form = get_data()
+    df = df_form[df_form['bracelet_number'] == bracelet_number].reset_index(drop=True)
+
+    if df.empty:
+        return process_data(df_form, bracelet_number)
+
+    submission_id = df.iloc[len(df)-1]['_id']
+
+    # update submission in kobo
+    url = f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data/bulk/'
+    headers = {'Authorization': f'Token {os.getenv("TOKEN")}'}
+    params = {'fomat': 'json'}
+
+    referral_update = request.form['referral']
+
+    if referral_update == 'Referral is not needed':
+        payload = {
+            "submission_ids": [str(submission_id)],
+            "data": {"referral": "no"}
+        }
+        requests.patch(
+            url=url,
+            data={'payload': json.dumps(payload)},
+            params=params,
+            headers=headers
+        )
+    else:
+        payload = {
+            "submission_ids": [str(submission_id)],
+            "data": {"referral": "yes"}
+        }
+        requests.patch(
+            url=url,
+            data={'payload': json.dumps(payload)},
+            params=params,
+            headers=headers
+        )
+        referral_urgency_dict = {
+            'Referral is needed, not urgent': 'not_urgent',
+            'Referral is needed, urgent': 'urgent',
+            'Referral is needed, medevac': 'medevac'
+        }
+        payload = {
+            "submission_ids": [str(submission_id)],
+            "data": {"referral_urgency": referral_urgency_dict[referral_update]}
+        }
+        requests.patch(
+            url=url,
+            data={'payload': json.dumps(payload)},
+            params=params,
+            headers=headers
+        )
+
+    df_form = get_data()
+    return process_data(df_form, bracelet_number)
+
+
 @app.route("/data", methods=['POST'])
 def default_page():
     if request.form['password'] == os.getenv("PASSWORD"):
         df_form = get_data()
-        return process_data(df_form)
+        return process_data(df_form, first=True)
     else:
         return render_template('home.html')
 
 
 @app.route("/dataupdate", methods=['POST'])
-def update_rescue():
+def update_bracelet():
     if 'bracelet' in request.form.keys():
         bracelet_number = request.form['bracelet']
     else:

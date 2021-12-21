@@ -21,7 +21,8 @@ referral_states = [
 def process_data(df_form, bracelet_number=None, first=False):
 
     if first:
-        return render_template('data.html')
+        return render_template('data.html',
+                               first=True)
     if bracelet_number == "":
         return render_template('data.html',
                                no_data=True)
@@ -91,6 +92,75 @@ def get_data():
     else:
         df_form = pd.DataFrame()
     return df_form
+
+
+def process_summary(df_form):
+
+    morbidities_all, referral_all = {}, {}
+    patients = df_form['bracelet_number'].nunique()
+
+    for bracelet in df_form['bracelet_number'].unique():
+        df = df_form[df_form['bracelet_number'] == bracelet]
+
+        morbidities = {}
+        referrals = {}
+        for ix, row in df.iterrows():
+            for level in ['primary', 'secondary', 'tertiary']:
+                case_key = level + '_case'
+                if case_key in row.keys():
+                    if not pd.isna(row[case_key]):
+                        case = row[case_key]
+                        case = case_map(case)
+                        morbidities[case] = 1
+            if row['referral'] == 'yes':
+                referrals['Referrals needed'] = 1
+                urgency = row['referral_urgency'].replace('_', ' ').capitalize()
+                referrals[urgency] = 1
+
+        for key in morbidities.keys():
+            if key in morbidities_all.keys():
+                morbidities_all[key] = morbidities_all[key] + 1
+            else:
+                morbidities_all[key] = 1
+        for key in referrals.keys():
+            if key in referral_all.keys():
+                referral_all[key] = referral_all[key] + 1
+            else:
+                referral_all[key] = 1
+
+    df_no_bracelet = df_form[pd.isna(df_form['bracelet_number'])].groupby(['age', 'gender']).last()
+    patients = patients + len(df_no_bracelet)
+
+    morbidities = {}
+    referrals = {}
+    for ix, row in df_no_bracelet.iterrows():
+        for level in ['primary', 'secondary', 'tertiary']:
+            case_key = level + '_case'
+            if case_key in row.keys():
+                if not pd.isna(row[case_key]):
+                    case = row[case_key]
+                    case = case_map(case)
+                    morbidities[case] = 1
+        if row['referral'] == 'yes':
+            referrals['Referrals needed'] = 1
+            urgency = row['referral_urgency'].replace('_', ' ').capitalize()
+            referrals[urgency] = 1
+
+    for key in morbidities.keys():
+        if key in morbidities_all.keys():
+            morbidities_all[key] = morbidities_all[key] + 1
+        else:
+            morbidities_all[key] = 1
+    for key in referrals.keys():
+        if key in referral_all.keys():
+            referral_all[key] = referral_all[key] + 1
+        else:
+            referral_all[key] = 1
+
+    return render_template('summary.html',
+                           patients=patients,
+                           morbidities=morbidities_all,
+                           referrals=referral_all)
 
 
 @app.route("/updatesubmission", methods=['POST'])
@@ -173,6 +243,12 @@ def update_bracelet():
     return process_data(df_form, bracelet_number)
 
 
+@app.route("/summary", methods=['POST'])
+def summary():
+    df_form = get_data()
+    return process_summary(df_form)
+
+
 @app.route("/")
 def login_page():
     return render_template('home.html')
@@ -202,7 +278,7 @@ def case_map(case):
 
 
 def map_age(age):
-    age_dict = {'u1': 'Less than 1 year',
+    age_dict = {'u1': 'less than 1 year',
                 '1_4': '1-4 years',
                 '5_12': '5-12 years',
                 '13_17': '13-17 years',

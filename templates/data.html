@@ -8,13 +8,31 @@
   <title>Ocean Viking Medical Consultations</title>
 </head>
 <body>
+    {% if first %}
+    <div class="container p-5 has-text-centered">
+      <div class="columns is-centered">
+        <div class="column is-one-quarter-desktop">
+          <div class="block my-3">
+            <form action="/summary" method="POST">
+              <div class="control my-5">
+                <input class="button is-primary" type="submit" value="view summary" />
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container p-0 has-text-centered">
+      <label for="" class="label">or</label>
+    </div>
+    {% endif %}
     <div class="container p-5 has-text-centered">
       <div class="columns is-centered">
         <div class="column is-one-quarter-desktop">
           <div class="block my-3">
             <form action="/dataupdate" method="POST">
               <div class="field my-5">
-                <label for="" class="label">Insert bracelet number</label>
+                <label for="" class="label">insert bracelet number</label>
                 <div class="control"><input class="input" type="text" name="bracelet" /></div>
               </div>
               <div class="control my-5">
@@ -47,6 +65,8 @@
           <div class="column is-one-quarter-desktop">
             <div class="block my-3">
               <label for="" class="label" style="color:#EE3224">Patient information</label>
+            </div>
+            <div class="block my-3 p-3">
                 {% for info_name, info_values in info.items() %}
                   <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
                 {% endfor %}
@@ -61,7 +81,7 @@
               <label for="" class="label" style="color:#EE3224">Consultations</label>
             </div>
             {% for consultation in consultations %}
-              <div class="block my-3">
+              <div class="block my-3 p-3">
                 {% for info_name, info_values in consultation.items() %}
                   <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
                 {% endfor %}

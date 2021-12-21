@@ -6,10 +6,6 @@ __pycache__/
 # azure
 .azure/
 
-# data
-*.xlsx
-*.csv
-
 # C extensions
 *.so
 

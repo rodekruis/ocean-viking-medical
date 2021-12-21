@@ -1,11 +1,8 @@
 import requests
 import pandas as pd
-from collections import OrderedDict
-import io
 import os
 import json
 from dotenv import load_dotenv
-# from azure.storage.blob import BlobServiceClient
 from flask import Flask, render_template, request, send_file
 app = Flask(__name__)
 load_dotenv()  # take environment variables from .env
@@ -19,13 +16,19 @@ referral_states = [
 
 
 def process_data(df_form, bracelet_number=None, first=False):
+    """
+    process data to show patient information page
+    """
 
+    # default page, before inserting bracelet number
     if first:
         return render_template('data.html',
                                first=True)
     if bracelet_number == "":
         return render_template('data.html',
                                no_data=True)
+
+    # error page, in case no data is not found
     if df_form.empty and bracelet_number != "":
         return render_template('data.html',
                                not_found=True,
@@ -34,6 +37,7 @@ def process_data(df_form, bracelet_number=None, first=False):
     df = df_form[df_form['bracelet_number'] == bracelet_number]
     df = df.reset_index(drop=True)
 
+    # error page, in case no data is not found
     if df.empty:
         return render_template('data.html',
                                not_found=True,
@@ -42,7 +46,7 @@ def process_data(df_form, bracelet_number=None, first=False):
     df['start'] = pd.to_datetime(df['start'])
     df['date'] = df['start'].dt.date
 
-    # generic info
+    # patient info
     info = {}
     for x in ['name', 'gender', 'age']:
         if x in df.columns:
@@ -50,7 +54,7 @@ def process_data(df_form, bracelet_number=None, first=False):
     if 'age' in info.keys():
         info['age'] = map_age(info['age'])
 
-    # consultations
+    # consultations and referral status
     consultations = []
     referral = {}
     for ix, row in df.iterrows():
@@ -83,7 +87,9 @@ def process_data(df_form, bracelet_number=None, first=False):
 
 
 def get_data():
-    # get data from kobo
+    """
+    get data from KoBo
+    """
     headers = {'Authorization': f'Token {os.getenv("TOKEN")}'}
     data_request = requests.get(f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data.json', headers=headers)
     data = data_request.json()
@@ -95,7 +101,9 @@ def get_data():
 
 
 def process_summary(df_form):
-
+    """
+    process data to show summary of morbidities
+    """
     morbidities_all, referral_all = {}, {}
     patients = df_form['bracelet_number'].nunique()
 
@@ -165,7 +173,9 @@ def process_summary(df_form):
 
 @app.route("/updatesubmission", methods=['POST'])
 def update_submission():
-
+    """
+    update referral status
+    """
     bracelet_number = request.form['bracelet']
     df_form = get_data()
     df = df_form[df_form['bracelet_number'] == bracelet_number].reset_index(drop=True)
@@ -226,6 +236,9 @@ def update_submission():
 
 @app.route("/data", methods=['POST'])
 def default_page():
+    """
+    show patient information
+    """
     if request.form['password'] == os.getenv("PASSWORD"):
         df_form = get_data()
         return process_data(df_form, first=True)
@@ -235,6 +248,9 @@ def default_page():
 
 @app.route("/dataupdate", methods=['POST'])
 def update_bracelet():
+    """
+    get bracelet number and show patient info
+    """
     if 'bracelet' in request.form.keys():
         bracelet_number = request.form['bracelet']
     else:
@@ -245,16 +261,25 @@ def update_bracelet():
 
 @app.route("/summary", methods=['POST'])
 def summary():
+    """
+    show summary of morbidities
+    """
     df_form = get_data()
     return process_summary(df_form)
 
 
 @app.route("/")
 def login_page():
+    """
+    login page
+    """
     return render_template('home.html')
 
 
 def case_map(case):
+    """
+    map KoBo XLS column names to human-readable format
+    """
     case_map_dict = {'male': 'Male', 'female': 'Female', 'other': 'Other', 'u1': 'Less than 1 year', '1_4': '1-4 years',
                      '5_17': '5-17 years', '18_50': '18-50 years', '50p': '50+ years', 'scabies': 'Scabies',
                      'sea_sickness': 'Sea sickness', 'herpes': 'Herpes lip / cold sore', 'skin': 'Other skin infection',
@@ -278,6 +303,9 @@ def case_map(case):
 
 
 def map_age(age):
+    """
+    map KoBo XLS column names to human-readable format
+    """
     age_dict = {'u1': 'less than 1 year',
                 '1_4': '1-4 years',
                 '5_12': '5-12 years',

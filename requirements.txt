@@ -5,3 +5,9 @@ xlsxwriter==3.0.2
 python-dotenv==0.19.2
 azure-storage-blob==12.9.0
 openpyxl==3.0.9
+google-api-core==2.3.2
+google-api-python-client==2.33.0
+google-auth==2.3.3
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==0.4.6
+googleapis-common-protos==1.54.0

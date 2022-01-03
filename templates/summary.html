@@ -5,7 +5,12 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
-  <title>Ocean Viking Rescues</title>
+  <style type="text/css">
+    td {
+      padding: 0 15px;
+    }
+  </style>
+  <title>Ocean Viking Medical Consultations</title>
 </head>
 <body>
     <div class="container p-5 has-text-centered">
@@ -17,12 +22,29 @@
         </div>
       </div>
       <div class="columns is-centered">
-        <div class="column is-one-third-desktop">
+        <div class="column is-half-desktop">
           <div class="block my-3">
             <label for="" class="label" style="color:#EE3224">Morbidities</label>
-              {% for morb_name, morb_count in morbidities.items() %}
-                <label for="" class="label">{{ morb_name }} : {{ morb_count }}</label>
-              {% endfor %}
+            {% if patients > 0 %}
+              <table cellpadding="10" cellspacing="10">
+                <tr>
+                  <th>Morbidity</th>
+                  <th>Male</th>
+                  <th>Female</th>
+                  <th>Under 5y</th>
+                  <th>Total</th>
+                </tr>
+                {% for morb_name, morb_count in morbidities.items() %}
+                  <tr>
+                    <td>{{ morb_name }}</td>
+                    <td style="padding:0 20px 0 20px;">{{ morb_count['male'] }}</td>
+                    <td style="padding:0 20px 0 20px;">{{ morb_count['female'] }}</td>
+                    <td style="padding:0 40px 0 40px;">{{ morb_count['u5'] }}</td>
+                    <td style="padding:0 20px 0 20px;">{{ morb_count['total'] }}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            {% endif %}
           </div>
         </div>
       </div>

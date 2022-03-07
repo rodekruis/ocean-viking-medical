@@ -76,19 +76,34 @@
       {% endif %}
       {% if consultations %}
         <div class="columns is-centered">
-          <div class="column is-half-desktop">
+          <div class="column is-full-desktop">
             <div class="block my-3">
               <label for="" class="label" style="color:#EE3224">Consultations</label>
             </div>
-            {% for consultation in consultations %}
-              <div class="block my-3 p-3">
-                {% for info_name, info_values in consultation.items() %}
-                  <label for="" class="label">{{ info_name }}: {{ info_values }}</label>
-                {% endfor %}
+            {% if consultations|length > 0 %}
+              <div class="table is-fullwidth">
+                <table style="margin: 0px auto;">
+                  <tr>
+                    <th>Date</th>
+                    <th>Diagnosis</th>
+                    <th>Treatment</th>
+                    <th>Other information</th>
+                  </tr>
+                  {% for consultation in consultations %}
+                    <tr>
+                      <td style="padding:10px 20px 10px 20px;">{{ consultation['Date'] }}</td>
+                      <td style="padding:10px 20px 10px 20px;">{{ consultation['Diagnosis'] }}</td>
+                      <td style="padding:10px 20px 10px 20px; max-width: 300px">{{ consultation['Treatment'] }}</td>
+                      <td style="padding:10px 20px 10px 20px; max-width: 300px">{{ consultation['Other information'] }}</td>
+  <!--                    {% for info_name, info_values in consultation.items() %}-->
+  <!--                      <td style="padding:0 20px 0 20px;">{{ info_values }}</td>-->
+  <!--                    {% endfor %}-->
+                    </tr>
+                  {% endfor %}
+                </table>
               </div>
-            {% endfor %}
-            <br>
-            <div class="block my-3">
+            {% endif %}
+            <div class="block my-5">
               {% for info_name, info_values in referral.items() %}
                 <label for="" class="label" style="color:#EE3224">{{ info_name }} {{ info_values }}</label>
               {% endfor %}

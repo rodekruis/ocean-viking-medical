@@ -54,7 +54,11 @@ def process_data(df_form, bracelet_number=None, first=False):
     info = {}
     for x in ['name', 'gender', 'age']:
         if x in df.columns:
-            info[x] = df[x].dropna().unique()[-1]
+            info_data = df[x].dropna().unique()
+            if len(info_data) > 0:
+                info[x] = info_data[-1]
+            else:
+                info[x] = "unknown"
     if 'age' in info.keys():
         info['age'] = map_age(info['age'])
 
@@ -88,7 +92,14 @@ def process_data(df_form, bracelet_number=None, first=False):
                 consultation['Other information'] = info_text
         if ix == len(df)-1:
             if row['referral'] == 'yes':
-                referral['Referral is needed:'] = row['referral_urgency'].replace('_', ' ')
+                if not pd.isna(row['referral_urgency']):
+                    urgency = row['referral_urgency'].replace('_', ' ')
+                    if urgency != "not needed":
+                        referral['Referral is needed:'] = urgency
+                    else:
+                        referral['Referral is not needed'] = ''
+                else:
+                    referral['Referral is needed'] = ''
             else:
                 referral['Referral is not needed'] = ''
         consultations.append(consultation)
@@ -133,15 +144,15 @@ def get_data():
         df_form = pd.DataFrame(data['results'])
         if df_form.empty:
             return df_form, rotation_no
-        df_form['_submission_time'] = pd.to_datetime(df_form['_submission_time'])
 
         for ix, row in df.iterrows():
             if row['Start date'] <= pd.to_datetime(date.today()) <= row['End date']:
                 rotation_no = row['Rotation No']
-                start_date_ = row['Start date']
-                end_date_ = row['End date']
+                start_date_ = pd.to_datetime(row['Start date'], utc=True)
+                end_date_ = pd.to_datetime(row['End date'], utc=True)
 
-        df_form = df_form[(df_form['_submission_time'] >= start_date_) & (df_form['_submission_time'] <= end_date_)]
+        df_form['start'] = pd.to_datetime(df_form['start'])
+        df_form = df_form[(df_form['start'] >= start_date_) & (df_form['start'] <= end_date_)]
         if not df_form.empty:
             df_form['rotation_no'] = rotation_no
         else:
@@ -178,6 +189,7 @@ def process_summary(df_form):
                         if not pd.isna(row[case_key]):
                             case = row[case_key]
                             case = case_map(case)
+                            label = ""
                             if case == "Other":
                                 case = row[level+'_case_other']
                             if row['age'] == 'u1' or row['age'] == '1_4':
@@ -187,11 +199,13 @@ def process_summary(df_form):
                                     label = 'male'
                                 elif row['gender'] == 'female':
                                     label = 'female'
-                            morbidities[case] = {label: 1, 'total': 1}
+                            if label != "":
+                                morbidities[case] = {label: 1, 'total': 1}
                 if row['referral'] == 'yes':
                     referrals['Referrals needed'] = 1
-                    urgency = row['referral_urgency'].replace('_', ' ').capitalize()
-                    referrals[urgency] = 1
+                    if not pd.isna(row['referral_urgency']):
+                        urgency = row['referral_urgency'].replace('_', ' ').capitalize()
+                        referrals[urgency] = 1
 
             for key, morb_dict in morbidities.items():
                 if key in morbidities_all.keys():
@@ -235,8 +249,9 @@ def process_summary(df_form):
                         morbidities[case] = {label: 1, 'total': 1}
             if row['referral'] == 'yes':
                 referrals['Referrals needed'] = 1
-                urgency = row['referral_urgency'].replace('_', ' ').capitalize()
-                referrals[urgency] = 1
+                if not pd.isna(row['referral_urgency']):
+                    urgency = row['referral_urgency'].replace('_', ' ').capitalize()
+                    referrals[urgency] = 1
 
             for key, morb_dict in morbidities.items():
                 if key in morbidities_all.keys():
@@ -289,7 +304,7 @@ def update_submission():
     # update submission in kobo
     url = f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data/bulk/'
     headers = {'Authorization': f'Token {os.getenv("TOKEN")}'}
-    params = {'fomat': 'json'}
+    params = {'format': 'json'}
 
     referral_update = request.form['referral']
 

@@ -33,6 +33,7 @@
                 <table style="margin: 0px auto;">
                   <tr>
                     <th>Morbidity</th>
+                    <th>Bracelet no.</th>
                     <th>Male</th>
                     <th>Female</th>
                     <th>Under 5y</th>
@@ -41,6 +42,7 @@
                   {% for morb_name, morb_count in morbidities.items() %}
                     <tr>
                       <td style="padding:5px 0 5px 0;">{{ morb_name }}</td>
+                      <td style="padding:5px 20px 5px 20px;">{{ morb_count['bracelet'] }}</td>
                       <td style="padding:5px 20px 5px 20px;">{{ morb_count['male'] }}</td>
                       <td style="padding:5px 20px 5px 20px;">{{ morb_count['female'] }}</td>
                       <td style="padding:5px 40px 5px 40px;">{{ morb_count['u5'] }}</td>

@@ -86,6 +86,7 @@
                   <tr>
                     <th>Date</th>
                     <th>Diagnosis</th>
+                    <th>History</th>
                     <th>Treatment</th>
                     <th>Other information</th>
                   </tr>
@@ -93,6 +94,7 @@
                     <tr>
                       <td style="padding:10px 20px 10px 20px;">{{ consultation['Date'] }}</td>
                       <td style="padding:10px 20px 10px 20px;">{{ consultation['Diagnosis'] }}</td>
+                      <td style="padding:10px 20px 10px 20px;">{{ consultation['History'] }}</td>
                       <td style="padding:10px 20px 10px 20px; max-width: 300px">{{ consultation['Treatment'] }}</td>
                       <td style="padding:10px 20px 10px 20px; max-width: 300px">{{ consultation['Other information'] }}</td>
   <!--                    {% for info_name, info_values in consultation.items() %}-->

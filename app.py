@@ -9,6 +9,7 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from collections import OrderedDict
 import operator
+
 app = Flask(__name__)
 load_dotenv()  # take environment variables from .env
 
@@ -70,7 +71,7 @@ def process_data(df_form, bracelet_number=None, first=False):
         consultation['Date'] = row['start'].date()
         consultation['Diagnosis'] = ""
         for level in ['primary', 'secondary', 'tertiary']:
-            case_key = level+'_case'
+            case_key = level + '_case'
             # case_label = level.capitalize()+' Diagnosis'
             if case_key in row.keys():
                 if not pd.isna(row[case_key]):
@@ -82,6 +83,11 @@ def process_data(df_form, bracelet_number=None, first=False):
                         consultation['Diagnosis'] = case
                     else:
                         consultation['Diagnosis'] = consultation['Diagnosis'] + ", " + case
+        if 'history' in row.keys():
+            history = row['history']
+            if pd.isna(history):
+                history = "none"
+            consultation['History'] = history
         treatment = row['treatment']
         if pd.isna(treatment):
             treatment = "nothing"
@@ -90,7 +96,7 @@ def process_data(df_form, bracelet_number=None, first=False):
             info_text = row['info']
             if not pd.isna(info_text):
                 consultation['Other information'] = info_text
-        if ix == len(df)-1:
+        if ix == len(df) - 1:
             if row['referral'] == 'yes':
                 if not pd.isna(row['referral_urgency']):
                     urgency = row['referral_urgency'].replace('_', ' ')
@@ -104,7 +110,6 @@ def process_data(df_form, bracelet_number=None, first=False):
                 referral['Referral is not needed'] = ''
         consultations.append(consultation)
 
-
     return render_template('data.html',
                            info=info,
                            consultations=consultations,
@@ -117,7 +122,8 @@ def get_data():
     get data from KoBo
     """
     headers = {'Authorization': f'Token {os.getenv("TOKEN")}'}
-    data_request = requests.get(f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data.json', headers=headers)
+    data_request = requests.get(f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data.json',
+                                headers=headers)
     data = data_request.json()
 
     # get rotation info
@@ -191,7 +197,7 @@ def process_summary(df_form):
                             case = case_map(case)
                             label = ""
                             if case == "Other":
-                                case = row[level+'_case_other']
+                                case = row[level + '_case_other']
                             if row['age'] == 'u1' or row['age'] == '1_4':
                                 label = 'u5'
                             else:
@@ -200,7 +206,9 @@ def process_summary(df_form):
                                 elif row['gender'] == 'female':
                                     label = 'female'
                             if label != "":
-                                morbidities[case] = {label: 1, 'total': 1}
+                                morbidities[case] = {label: 1, 'total': 1, 'bracelet': bracelet}
+                            else:
+                                morbidities[case] = {'total': 1, 'bracelet': bracelet}
                 if row['referral'] == 'yes':
                     referrals['Referrals needed'] = 1
                     if not pd.isna(row['referral_urgency']):
@@ -210,8 +218,10 @@ def process_summary(df_form):
             for key, morb_dict in morbidities.items():
                 if key in morbidities_all.keys():
                     morb_dict_all = morbidities_all[key]
-                    for label in morb_dict.keys():
-                        morb_dict_all[label] = morb_dict_all[label] + 1
+                    for label in labels:
+                        if label in morb_dict.keys():
+                            morb_dict_all[label] = morb_dict_all[label] + 1
+                    morb_dict_all['bracelet'] = morb_dict_all['bracelet'] + ", " + morb_dict["bracelet"]
                     morbidities_all[key] = morb_dict_all
                 else:
                     for label in labels:
@@ -256,8 +266,10 @@ def process_summary(df_form):
             for key, morb_dict in morbidities.items():
                 if key in morbidities_all.keys():
                     morb_dict_all = morbidities_all[key]
-                    for label in morb_dict.keys():
-                        morb_dict_all[label] = morb_dict_all[label] + 1
+                    for label in labels:
+                        if label in morb_dict.keys():
+                            morb_dict_all[label] = morb_dict_all[label] + 1
+                    morb_dict_all['bracelet'] = morb_dict_all['bracelet'] + ", " + morb_dict["bracelet"]
                     morbidities_all[key] = morb_dict_all
                 else:
                     for label in labels:
@@ -299,7 +311,7 @@ def update_submission():
     if df.empty:
         return process_data(df_form, bracelet_number)
 
-    submission_id = df.iloc[len(df)-1]['_id']
+    submission_id = df.iloc[len(df) - 1]['_id']
 
     # update submission in kobo
     url = f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data/bulk/'
@@ -380,6 +392,7 @@ def download_data():
                        'gender',
                        'age',
                        'diagnosis',
+                       'history',
                        'treatment',
                        'info',
                        'referral_urgency']
@@ -459,7 +472,8 @@ def case_map(case):
                      'gastritis': 'Gastritis', 'dental': 'Dental', 'injury': 'Non-violence related injury',
                      'violence': 'Violence related injury', 'fuel_burn': 'Fuel Burns',
                      'exposure_skin': 'Exposure related skin disorder', 'dehydration': 'Dehydration',
-                     'hypothermia': 'Hypothermia', 'body_pain': 'Generalized body pain / headache', 'awd': 'Acute watery diarrhoea',
+                     'hypothermia': 'Hypothermia', 'body_pain': 'Generalized body pain / headache',
+                     'awd': 'Acute watery diarrhoea',
                      'sawd': 'Severe acute diarrhoea', 'abd': 'Acute bloody diarrhoea',
                      'fever': 'Fever without identified cause', 'urti': 'Acute upper respiratory tract infection',
                      'lrti': 'Acute lower respiratory tract infection', 'tb': 'Tuberculosis (suspected)',
@@ -489,5 +503,3 @@ def map_age(age):
         return age_dict[age]
     else:
         return age
-
-

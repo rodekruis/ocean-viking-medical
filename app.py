@@ -269,7 +269,10 @@ def process_summary(df_form):
                     for label in labels:
                         if label in morb_dict.keys():
                             morb_dict_all[label] = morb_dict_all[label] + 1
-                    morb_dict_all['bracelet'] = morb_dict_all['bracelet'] + ", " + morb_dict["bracelet"]
+                    if 'bracelet' in morb_dict.keys():
+                        morb_dict_all['bracelet'] = morb_dict_all['bracelet'] + ", " + morb_dict["bracelet"]
+                    else:
+                        morb_dict_all['bracelet'] = morb_dict_all['bracelet'] + ", " + 'NaN'
                     morbidities_all[key] = morb_dict_all
                 else:
                     for label in labels:

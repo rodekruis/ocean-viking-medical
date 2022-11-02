@@ -49,7 +49,10 @@ def process_data(df_form, bracelet_number=None, first=False):
                                not_found=True,
                                bracelet_number=bracelet_number)
 
-    df['start'] = pd.to_datetime(df['start'])
+    try:
+        df['start'] = pd.to_datetime(df['start'])
+    except ValueError:
+        df['start'] = pd.to_datetime(df['start'], utc = True)
 
     # patient info
     info = {}

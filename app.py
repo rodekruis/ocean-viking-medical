@@ -91,6 +91,11 @@ def process_data(df_form, bracelet_number=None, first=False):
             if pd.isna(history):
                 history = "none"
             consultation['History'] = history
+        if 'vital_signs' in row.keys():
+            vital_signs = row['vital_signs']
+            if pd.isna(vital_signs):
+                vital_signs = "none"
+            consultation['Vital signs'] = vital_signs
         treatment = row['treatment']
         if pd.isna(treatment):
             treatment = "nothing"
@@ -131,7 +136,7 @@ def get_data():
 
     # get rotation info
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-    SAMPLE_SPREADSHEET_ID = '1L-d0lT2s7QjxlXbvYkcBWdSPFkKsYEtD52J_H4VK8dA'
+    SAMPLE_SPREADSHEET_ID = os.getenv("GOOGLESHEETID")
     SAMPLE_RANGE_NAME = 'Rotations!A:C'
     sa_file = 'google-service-account-hspatsea-ocean-viking.json'
     creds = service_account.Credentials.from_service_account_file(sa_file, scopes=SCOPES)
@@ -399,6 +404,7 @@ def download_data():
                        'age',
                        'diagnosis',
                        'history',
+                       'vital_signs',
                        'treatment',
                        'info',
                        'referral_urgency']
@@ -474,13 +480,14 @@ def case_map(case):
     """
     case_map_dict = {'male': 'Male', 'female': 'Female', 'other': 'Other', 'u1': 'Less than 1 year', '1_4': '1-4 years',
                      '5_17': '5-17 years', '18_50': '18-50 years', '50p': '50+ years', 'scabies': 'Scabies',
-                     'sea_sickness': 'Sea sickness', 'herpes': 'Herpes lip / cold sore', 'skin': 'Other skin infection',
+                     'sea_sickness': 'Sea sickness', 'herpes': 'Herpes lip / cold sore', 'skin': 'Other skin condition',
                      'gastritis': 'Gastritis', 'dental': 'Dental', 'injury': 'Non-violence related injury',
                      'violence': 'Violence related injury', 'fuel_burn': 'Fuel Burns',
                      'exposure_skin': 'Exposure related skin disorder', 'dehydration': 'Dehydration',
                      'hypothermia': 'Hypothermia', 'body_pain': 'Generalized body pain / headache',
                      'awd': 'Acute watery diarrhoea',
                      'sawd': 'Severe acute diarrhoea', 'abd': 'Acute bloody diarrhoea',
+                     'chronic_diarrhoea': 'Chronic diarrhoea',
                      'fever': 'Fever without identified cause', 'urti': 'Acute upper respiratory tract infection',
                      'lrti': 'Acute lower respiratory tract infection', 'tb': 'Tuberculosis (suspected)',
                      'meningitis': 'Meningitis (suspected)', 'std': 'Sexually transmitted infection (suspected)',
@@ -488,6 +495,7 @@ def case_map(case):
                      'anaemia': 'Anaemia', 'malnutrition': 'Severe acute malnutrition', 'chronic': 'Chronic disease',
                      'cpd': 'Mental health presentation', 'spd': 'Severe psychiatric disorder',
                      'covid': 'Confirmed COVID-19', 'sv': 'SV/SGBV', 'pregnancy': 'Pregnancy related (ANC & PNC)',
+                     'pregnancy_anc': 'Pregnancy ANC', 'pregnancy_pnc': 'Pregnancy PNC',
                      'baby': 'Baby consultation', 'yes': 'yes', 'no': 'no'}
     if case in case_map_dict.keys():
         return case_map_dict[case]

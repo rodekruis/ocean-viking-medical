@@ -1,6 +1,6 @@
 # ocean-viking-medical
 
-web app to monitor medical consultations registered via KoBo.
+Wb app to monitor medical consultations registered via KoBo.
 
 Developed for the [rescue ship "Ocean Viking"](https://sosmediterranee.com/about-us/) in support of the [HSP@Sea operation](https://go.ifrc.org/emergencies/5425).
 

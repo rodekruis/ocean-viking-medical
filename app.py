@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import pandas as pd
 import os
 import json
@@ -130,8 +132,13 @@ def get_data():
     get data from KoBo
     """
     headers = {'Authorization': f'Token {os.getenv("TOKEN")}'}
-    data_request = requests.get(f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data.json',
-                                headers=headers)
+    session = requests.Session()
+    retry = Retry(connect=10, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    data_request = session.get(f'https://kobo.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data.json',
+                               headers=headers)
     data = data_request.json()
 
     # get rotation info
@@ -325,7 +332,7 @@ def update_submission():
     submission_id = df.iloc[len(df) - 1]['_id']
 
     # update submission in kobo
-    url = f'https://kobonew.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data/bulk/'
+    url = f'https://kobo.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data/bulk/'
     headers = {'Authorization': f'Token {os.getenv("TOKEN")}'}
     params = {'format': 'json'}
 

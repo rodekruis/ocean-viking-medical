@@ -158,8 +158,8 @@ def get_data():
     df['End date'] = pd.to_datetime(df['End date'], dayfirst=True)
     df['Rotation No'] = df['Rotation No'].astype(float).round(0).astype(int)
     rotation_no = max(df['Rotation No'])
-    start_date_ = pd.to_datetime(date.today())
-    end_date_ = pd.to_datetime(date.today())
+    start_date_ = pd.to_datetime(date.today(), utc=True)
+    end_date_ = pd.to_datetime(date.today(), utc=True)
 
     if 'results' in data.keys():
         df_form = pd.DataFrame(data['results'])

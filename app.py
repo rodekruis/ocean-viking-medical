@@ -140,7 +140,7 @@ def get_data():
     session.mount("http://", adapter)
     session.mount("https://", adapter)
     data_request = session.get(
-        f'https://kobo.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data.json',
+        f'https://eu.kobotoolbox.org/api/v2/assets/{os.getenv("ASSET")}/data.json',
         headers=headers,
     )
     data = data_request.json()
@@ -362,7 +362,7 @@ def update_submission():
     submission_id = df.iloc[len(df) - 1]["_id"]
 
     # update submission in kobo
-    url = f'https://kobo.ifrc.org/api/v2/assets/{os.getenv("ASSET")}/data/bulk/'
+    url = f'https://eu.kobotoolbox.org/api/v2/assets/{os.getenv("ASSET")}/data/bulk/'
     headers = {"Authorization": f'Token {os.getenv("TOKEN")}'}
     params = {"format": "json"}
 

@@ -133,3 +133,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+get_top_morbidities.py
+top_morbidities.xlsx

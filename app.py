@@ -144,7 +144,7 @@ def get_data():
     all_data = []
     while True:
         params = {"limit": limit, "start": start}
-        resp = requests.get(f"https://eu.kobotoolbox.org/api/v2/assets/{asset}/data.json", headers=headers, params=params)
+        resp = requests.get(f"https://eu.kobotoolbox.org/api/v2/assets/{os.getenv("ASSET")}/data.json", headers=headers, params=params)
         resp.raise_for_status()
         data = resp.json()
         if "results" in data.keys():

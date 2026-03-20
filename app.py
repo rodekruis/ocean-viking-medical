@@ -139,11 +139,19 @@ def get_data():
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
-    data_request = session.get(
-        f'https://eu.kobotoolbox.org/api/v2/assets/{os.getenv("ASSET")}/data.json',
-        headers=headers,
-    )
-    data = data_request.json()
+    start = 0
+    limit = 1000
+    all_data = []
+    while True:
+        params = {"limit": limit, "start": start}
+        resp = requests.get(f"https://eu.kobotoolbox.org/api/v2/assets/{asset}/data.json", headers=headers, params=params)
+        resp.raise_for_status()
+        data = resp.json()
+        if "results" in data.keys():
+            all_data.extend(data["results"])
+            if not data["next"]:
+                break
+            start += limit
 
     # get rotation info
     SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -170,25 +178,22 @@ def get_data():
     start_date_ = pd.to_datetime(date.today(), utc=True)
     end_date_ = pd.to_datetime(date.today(), utc=True)
 
-    if "results" in data.keys():
-        df_form = pd.DataFrame(data["results"])
-        if df_form.empty:
-            return df_form, rotation_no
+    df_form = pd.DataFrame(all_data)
+    if df_form.empty:
+        return df_form, rotation_no
 
-        for ix, row in df.iterrows():
-            if row["Start date"] <= pd.to_datetime(date.today()) <= row["End date"]:
-                rotation_no = row["Rotation No"]
-                start_date_ = pd.to_datetime(row["Start date"], utc=True)
-                end_date_ = pd.to_datetime(row["End date"], utc=True)
+    for ix, row in df.iterrows():
+        if row["Start date"] <= pd.to_datetime(date.today()) <= row["End date"]:
+            rotation_no = row["Rotation No"]
+            start_date_ = pd.to_datetime(row["Start date"], utc=True)
+            end_date_ = pd.to_datetime(row["End date"], utc=True)
 
-        df_form["start"] = pd.to_datetime(df_form["start"], utc=True)
-        df_form = df_form[
-            (df_form["start"] >= start_date_) & (df_form["start"] <= end_date_)
-        ]
-        if not df_form.empty:
-            df_form["rotation_no"] = rotation_no
-        else:
-            df_form = pd.DataFrame()
+    df_form["start"] = pd.to_datetime(df_form["start"], utc=True)
+    df_form = df_form[
+        (df_form["start"] >= start_date_) & (df_form["start"] <= end_date_)
+    ]
+    if not df_form.empty:
+        df_form["rotation_no"] = rotation_no
     else:
         df_form = pd.DataFrame()
     return df_form, rotation_no
